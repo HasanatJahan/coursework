@@ -146,25 +146,59 @@ trips %>%
 # in number of trips by hour of the day
 # hint: use the hour() function from the lubridate package
 
-
-# saving so far
 trips %>% 
   mutate(hour_of_day = hour(starttime), day = floor_date(starttime, unit = "day")) %>% 
   group_by(hour_of_day, day) %>% 
   select(hour_of_day, day) %>% 
-  summarise(hour_and_day_count = n() )%>% 
+  summarise(hour_and_day_count = n()) %>% 
+  group_by(hour_of_day) %>% 
+  mutate(hour_mean = mean(hour_and_day_count), sd_hour = sd(hour_and_day_count)) %>% 
   pivot_wider(names_from = day, values_from = hour_and_day_count) %>% 
-  select(`2014-01-01`:`2014-09-01`) %>% 
-  mutate(hour_sum = rowSums(.)) # this part does not work yet
+  select(hour_of_day, hour_mean, sd_hour)
 
 
 # plot the above
+trips %>% 
+  mutate(hour_of_day = hour(starttime), day = floor_date(starttime, unit = "day")) %>% 
+  group_by(hour_of_day, day) %>% 
+  select(hour_of_day, day) %>% 
+  summarise(hour_and_day_count = n()) %>% group_by(hour_of_day) %>% 
+  mutate(hour_mean = mean(hour_and_day_count), sd_hour = sd(hour_and_day_count)) %>% 
+  pivot_wider(names_from = day, values_from = hour_and_day_count) %>% 
+  select(hour_of_day, hour_mean, sd_hour) %>% 
+  ggplot(aes(x = hour_of_day)) + 
+  geom_point(aes(y= hour_mean, color = 'hour_mean')) + 
+  geom_point(aes(y = sd_hour, color = 'sd_hour')) + 
+  scale_color_manual(name= "", values = c("hour_mean" = "red", "sd_hour" = "blue"))
 
 # repeat this, but now split the results by day of the week
 # (Monday, Tuesday, ...) or weekday vs. weekend days
 # hint: use the wday() function from the lubridate package
 trips %>% 
-  mutate(day = floor_date(starttime, unit = "day"), day_of_week = wday(starttime)) %>% 
-  group_by(day, day_of_week) %>% 
-  select(day, day_of_week)
+  mutate(day = floor_date(starttime, unit = "day"), day_of_week = wday(starttime))  %>%
+  group_by(day_of_week, day) %>% 
+  select(day, day_of_week) %>% 
+  arrange(day_of_week) %>% group_by(day_of_week, day) %>%
+  summarise(day_count = n()) %>% 
+  group_by(day_of_week) %>% 
+  mutate(day_mean = mean(day_count), sd_day = sd(day_count)) %>% 
+  pivot_wider(names_from = day, values_from = day_count) %>% 
+  select(day_of_week, day_mean, sd_day)
+
+# now to plot this 
+trips %>% 
+  mutate(day = floor_date(starttime, unit = "day"), day_of_week = wday(starttime))  %>%
+  group_by(day_of_week, day) %>% 
+  select(day, day_of_week) %>% 
+  arrange(day_of_week) %>% group_by(day_of_week, day) %>%
+  summarise(day_count = n()) %>% 
+  group_by(day_of_week) %>% 
+  mutate(day_mean = mean(day_count), sd_day = sd(day_count)) %>% 
+  pivot_wider(names_from = day, values_from = day_count) %>% 
+  select(day_of_week, day_mean, sd_day) %>%  
+  mutate(is_weekend = ifelse(day_of_week > 5, "1", "0")) %>% 
+  ggplot(aes(x = day_of_week, color = is_weekend)) + 
+  geom_pointrange(aes(y = day_mean, ymin = day_mean - sd_day, ymax = day_mean + sd_day ))
+
+
 
