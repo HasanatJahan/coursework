@@ -1,0 +1,458 @@
+---
+title: "IST Notebook Question Answers Chp 4,6,7,9,10"
+output: html_notebook
+---
+
+Question 4.1 
+Value Probability
+0         p
+1         2p
+2         3p
+3         4p
+4         5p
+5         6p
+Table 4.4: The Distribution of Y
+
+Table 4.6 presents the probabilities of the random variable Y
+These probabilities are a function of the number p, the probability of the value
+“0”. Answer the following questions:
+1. What is the value of p?
+Ans: p = 1/21 
+2. P(Y < 3) = 6p = 6/21
+3. P(Y = odd) = 12p = 12/21
+4. P(1 ≤ Y < 4) = 9p = 9/21 = 3/7 
+5. P(|Y − 3| < 1.5) = 15p = 12/21 = 4/7
+6. E(Y ) = 
+The calculation involves multiplying the probabilities with the values
+```{r}
+Y.val <- c(0,1,2,3,4,5)
+P.val <- c(1,2,3,4,5,6)/21
+E <- sum(Y.val*P.val)
+print(E)
+
+```
+
+7. Var(Y ) = ?
+The calc involves 
+```{r}
+Var <- sum((Y.val-E)^2*P.val)
+Var
+
+```
+
+8. What is the standard deviation of Y
+```{r}
+sd <- sqrt(Var)
+sd
+```
+
+Some testing from pages in the chapter: 
+```{r}
+pnorm(5,2,3) - pnorm(0,2,3)
+qnorm(0.75)
+
+# checking the qnorm function
+qnorm(0.025, 2, 3)
+
+#checking out pbinom
+pbinom(2060, 4000, 0.5) - pbinom(1939, 4000, 0.5)
+```
+
+
+
+
+Question 6.1 : Consider the problem of establishing regulations concerning the
+maximum number of people who can occupy a lift. In particular, we would like
+to assess the probability of exceeding maximal weight when 8 people are allowed
+to use the lift simultaneously and compare that to the probability of allowing 9
+people into the lift.
+Assume that the total weight of 8 people chosen at random follows a normal
+distribution with a mean of 560kg and a standard deviation of 57kg. Assume
+that the total weight of 9 people chosen at random follows a normal distribution
+with a mean of 630kg and a standard deviation of 61kg.
+1. What is the probability that the total weight of 8 people exceeds 650kg?
+```{r}
+1 - pnorm(650, 560, 57)
+```
+
+2. What is the probability that the total weight of 9 people exceeds 650kg?
+```{r}
+1 - pnorm(650, 630, 61)
+```
+
+3. What is the central region that contains 80% of distribution of the total
+weight of 8 people?
+The 80% range would be between 90% and 10%
+```{r}
+qnorm(0.1, 560, 57)
+qnorm(0.9, 560, 57)
+```
+4. What is the central region that contains 80% of distribution of the total
+weight of 9 people?
+```{r}
+qnorm(0.1, 630, 61)
+qnorm(0.9, 630, 61)
+
+
+# question: couldn't you just do 80%?
+# Because they specified it to be the central region
+qnorm(0.8, 630, 61)
+```
+####################################
+Exercise 7.1 
+Our goal in this question is to investigate the sampling distribution of the sample
+average of the variable “bmi”. We assume a sample of size n = 150.
+1. Compute the population average of the variable “bmi”.
+```{r}
+directory <- ("~//Desktop/")
+# this part isn't reading in the file 
+#pop.2 <- read.csv(file = directory)
+
+# trying another way 
+pop.2 <- read.csv("http://pluto.huji.ac.il/~msby/StatThink/Datasets/pop2.
+csv")
+
+# CONTINUING WITH THE ASSUMPTION THAT THE FILE IS BEING PROPERLY BEING READ 
+mean(pop.2$bmi)
+```
+
+2. Compute the population standard deviation of the variable “bmi”.
+```{r}
+sd(pop.2$bmi)
+```
+
+3. Compute the expectation of the sampling distribution for the sample average of the variable.
+Answer: 
+Initially, we produce a vector of zeros of the given lenght (100,000). In each
+iteration of the “for” loop a random sample of size 150 is selected from the population. The sample average is computed and stored in the sequence “X.bar”.
+At the end of all the iterations all the zeros are replaced by evaluations of the
+sample average.
+The expectation of the sampling distribution of the sample average is computed by the application of the function “mean” to the sequence that represents
+the sampling distribution of the sample average.
+```{r}
+# this produces a vector of zeros size of 10^5 and populate it with zeros 
+X.bar <- rep(0, 10^5)
+
+for(i in 1:10^5)
+{
+  # take a 150 person sample from the population
+  X.samp <- sample(pop.2$bmi, 150)
+  # then calculate the mean of the sample and store in the vector 
+  X.bar[i] <- mean(X.samp) 
+}
+
+# After that's done take the mean of the sample
+mean(X.bar)
+mean_val <- mean(X.bar)
+```
+
+4. Compute the standard deviation of the sampling distribution for the sample average of the variable.
+```{r}
+sd(X.bar)
+sd_val <- sd(X.bar)
+```
+
+5. Identify, using simulations, the central region that contains 80% of the
+sampling distribution of the sample average.
+```{r}
+# here we can just use quantile to find the central region that contains 80% of the distribution
+quantile(X.bar, c(0.1, 0.9))
+
+```
+
+6. Identify, using the Central Limit Theorem, an approximation of the central region that contains 80% of the sampling distribution of the sample
+average.
+
+```{r}
+qnorm(0.1, mean_val, sd_val)
+qnorm(0.9, mean_val, sd_val)
+
+# Another way to do this 
+qnorm(c(0.1, 0.9), mean_val, sd_val)
+```
+
+
+
+###########################################
+Exercise 9.1: A total of 50 patients experiencing post-polio pain syndrome were recruited.
+Some of the patients were treated with an active magnetic device and the others
+were treated with an inactive placebo device. All patients rated their pain before
+(score1) and after application of the device (score2). The variable “change”
+is the difference between “score1” and “score2. The treatment condition is
+indicated by the variable “active.” The value “1” indicates subjects receiving
+treatment with the active magnet and the value “2” indicates subjects treated
+with the inactive placebo.
+
+Answer: 
+1.What is the sample average of the change in score between the patient’s
+rating before the application of the device and the rating after the application?
+
+```{r}
+# Import the data 
+magnets <- read.csv("http://pluto.huji.ac.il/~msby/
+StatThink/Datasets/magnets.csv")
+
+summary(magnets)
+
+# now to find the mean of the change 
+mean(abs(magnets$score2 - magnets$score1))
+
+```
+2. Is the variable “active” a factor or a numeric variable?
+```{r}
+typeof(magnets$active)
+magnets$active
+```
+We see that it is a character type. 
+
+3. . Compute the average value of the variable “change” for the patients that
+received and active magnet and average value for those that received an
+inactive placebo. (Hint: Notice that the first 29 patients received an active
+magnet and the last 21 patients received an inactive placebo. The subsequence of the first 29 values of the given variables can be obtained via
+the expression “change[1:29]” and the last 21 vales are obtained via the
+expression “change[30:50]”.)
+```{r}
+treatment_mean <- mean(magnets$change[1:29], na.rm = TRUE)
+non_treatment_mean <- mean(magnets$change[30:50])
+
+treatment_mean
+non_treatment_mean
+
+```
+
+4. Compute the sample standard deviation of the variable “change” for the
+patients that received and active magnet and the sample standard deviation for those that received an inactive placebo.
+
+```{r}
+sd(magnets$change[1:29])
+sd(magnets$change[30:50])
+```
+
+5. Produce a boxplot of the variable “change” for the patients that received
+and active magnet and for patients that received an inactive placebo.
+What is the number of outliers in each subsequence?
+```{r}
+library(ggplot2)
+boxplot(magnets$change[1:29])
+boxplot(magnets$change[30:50])
+```
+There are three outliers in the non-treatment boxplot. 
+There are no outliers in the treatment boxplot. 
+We can look at the outliers as: 
+```{r}
+table(magnets$change[30:50])
+```
+But when we the table of values we see that there are actually 4 outliers which are 3,4,5,11
+
+
+
+######################################################
+Checking out some code from Chapter 10 
+```{r}
+lam <- 1/13000
+ X.bar <- rep(0,10^5)
+ for(i in 1:10^5)
+ {
+ X <- rexp(201,lam)
+ X.bar[i] <- mean(X)
+ }
+ mean(abs(X.bar - 1/lam) <= 1000)
+```
+
+Prodice a sampling distribution 
+```{r}
+mu <- 3
+sig <- sqrt(2)
+X.bar <- rep(0, 10^5)
+mid.range <- rep(0,10^5)
+for(i in 1:10^5)
+{
+  X <- rnorm(100, mu, sig)
+  X.bar[i] <- mean(X)
+  mid.range[i] <- (max(X) + min(X))/2
+}
+var(X.bar)
+var(mid.range)
+mean(X)
+mean(X.bar)
+mean(mid.range)
+
+
+hist(X.bar)
+hist(mid.range)
+```
+```{r}
+ mu <- 5
+ std <- sqrt(3)
+ X.var <- rep(0,10^5)
+ for(i in 1:10^5)
+ {
+ X <- rnorm(200,mu,std)
+ X.var[i] <- var(X)
+ }
+ mean(X.var)
+ 
+ hist(X.var)
+```
+
+######################################################
+
+Exercise 10:
+1. Simulate the sampling distribution of average and the median of a sample
+of size n = 100 from the Normal(3, 2) distribution. Compute the expectation and the variance of the sample average and of the sample median.
+Which of the two estimators has a smaller mean square error?
+```{r}
+summary(X)
+hist(X)
+view(X)
+
+mu <- 3
+sig <- sqrt(2)
+X.bar <- rep(0, 10^5)
+X.med<- rep(0, 10^5) 
+
+for(i in 1:10^5)
+{
+  X <- rnorm(100, mu, sig)
+  X.bar[i] <- mean(X)
+  X.med[i] <- median(X)
+}
+
+# for sample mean
+mean(X.bar)
+var(X.bar)
+
+# for sample median 
+mean(X.med)
+var(X.med)
+
+#actual values 
+mean(X)
+```
+The mean square error of an unbiased estimator is equal to its expectation
+
+Note: my values are not exactly matching, what could be 
+the error ?
+
+
+2. Simulate the sampling distribution of average and the median of a sample
+of size n = 100 from the Uniform(0.5, 5.5) distribution. Compute the
+expectation and the variance of the sample average and of the sample
+median. Which of the two estimators has a smaller mean square error?
+
+```{r}
+X.bar <- rep(0, 10^5)
+X.med <- rep(0, 10^5)
+
+for(i in 1:10^5)
+{
+  X <- runif(100, 0.5, 5.5)
+  X.bar[i] <- mean(X)
+  X.med[i] <- median(X)
+}
+
+mean(X.bar)
+mean(X.med)
+
+var(X.bar)
+var(X.med) 
+
+#what's the real mean 
+mean(X)
+
+# let's see what they look like 
+hist(X.bar)
+hist(X.med)
+```
+Exercise 10.2: 
+ One of the variables in
+the file is a factor by the name “group” that identifies levels of blood pressure.
+The levels of this variable are “HIGH”, “LOW”, and “NORMAL”.
+```{r}
+# importing data again for sake of compeltion 
+pop.2 <- read.csv("http://pluto.huji.ac.il/~msby/StatThink/Datasets/pop2.
+csv")
+
+ex2 <- read.csv("http://pluto.huji.ac.il/~msby/StatThink/Datasets/ex2.csv")
+
+summary(ex2)
+```
+
+1. Compute the proportion in the sample of those with a high level of blood
+pressure
+```{r}
+colnames(ex.2)
+summary(ex.2$group)
+high_group <- ex2 %>% select(group) %>% filter(group =="HIGH")%>% summarize(count = n()) 
+high_group
+
+# here we see the count is 37 
+print(37/150)
+
+summary(ex2)
+
+# now to calculate the mean of the group of high
+mean(ex2$group == "HIGH")
+
+```
+2. Compute the proportion in the population of those with a high level of
+blood pressure.
+
+```{r}
+#pop2 <- read.csv("http://pluto.huji.ac.il/~msby/StatThink/Datasets/pop2.csv")
+
+# calculate mean by group HIGH
+mean(pop2$group == "HIGH")
+```
+
+3. Simulate the sampling distribution of the sample proportion and compute
+its expectation.
+```{r}
+
+P.hat <- rep(0, 10^5)
+for(i in 1:10^5)
+{
+  X <- sample(pop2$group, 200)
+  P.hat[i] <- mean(X == "HIGH")
+}
+mean(P.hat)
+
+```
+
+
+4. Compute the variance of the sample proportion.
+```{r}
+var(P.hat)
+```
+
+5. It is proposed in Section 10.5 that the variance of the sample proportion
+is Var(Pˆ) = p(1 − p)/n, where p is the probability of the event (having a
+high blood pressure in our case) and n is the sample size (n = 150 in our
+case). Examine this proposal in the current setting.
+
+```{r}
+# first calculate the probability of it happening 
+p <- mean(pop.2$group == "HIGH")
+p*(1-p)/150
+```
+
+
+# Exercise(s) is from Intro to Stat with Randomization and Simulation
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
