@@ -1,0 +1,111 @@
+---
+title: "LAB 3.6.2 ISLR"
+output: html_notebook
+---
+Import the libraries
+
+```{r}
+library(MASS)
+library(ISLR)
+```
+
+```{r}
+#fix(Boston)
+names(Boston)
+?Boston
+
+```
+
+```{r}
+attach(Boston)
+lm.fit=lm(medv~lstat)
+summary(lm.fit)
+names(lm.fit)
+```
+To extract coefficients 
+```{r}
+coef(lm.fit)
+```
+```{r}
+# the confidence interval 
+confint(lm.fit)
+
+# produce confidence intervals 
+predict (lm.fit ,data.frame(lstat=c(5,10 ,15)),interval ="confidence")
+
+# produce prediction intervals
+predict(lm.fit, data.frame(lstat=c(5, 10, 15)), interval="prediction")
+
+
+
+```
+Now let's get plotting!
+```{r}
+# lwd is for line thickness
+plot(lstat, medv)
+abline(lm.fit)
+abline (lm.fit ,lwd =3)
+abline (lm.fit ,lwd=3 ,col ="red")
+
+
+```
+
+```{r}
+plot(lstat ,medv,lwd = 5 ,col="blue")
+plot(lstat ,medv ,pch =20)
+plot(1:20,1:20,pch =1:20)
+
+
+```
+
+This plot is too cool for school
+```{r}
+plot(lstat ,medv ,pch ="😎")
+
+```
+
+par() is used to divide the plotting region
+```{r}
+par(mfrow=c(2,2))
+plot(lm.fit)
+
+```
+
+Residuals from linear regression fit and rstident()
+```{r}
+plot(predict(lm.fit), residuals(lm.fit))
+plot(predict(lm.fit), rstudent(lm.fit))
+```
+
+
+Leverage statistics can be computed for any number of predictors using the hatvalues() function
+
+```{r}
+plot(hatvalues(lm.fit))
+# now to tell us the largest leverage statistic 
+which.max(hatvalues(lm.fit))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
