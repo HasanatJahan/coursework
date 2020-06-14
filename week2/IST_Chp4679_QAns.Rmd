@@ -275,9 +275,8 @@ data set we apply the same steps that were used in the simulation for the comput
 ```{r}
 x1.bar <- mean(magnets$change[1:29])
 x2.bar <- mean(magnets$change[30:50])
-x1.var <- var(magnets$change[1:29])
-x2.var <- var(magnets$change[30:50])
-(x1.bar-x2.bar)/sqrt(x1.var/29 + x2.var/21)
+ x1.var <- var(magnets$change[1:29])
+ x2.var <- var(magnets$change[30:50]) (x1.bar-x2.bar)/sqrt(x1.var/29 + x2.var/21)
 ```
 
 

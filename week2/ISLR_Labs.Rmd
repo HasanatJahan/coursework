@@ -93,7 +93,7 @@ which.max(hatvalues(lm.fit))
 
 ## Lab 3.6.3 throught 3.6.6
 
-### Lab 3.6.3 
+Lab 3.6.3 
 ```{r}
 lm.fit = lm(medv~lstat+age, data=Boston)
 summary(lm.fit)
@@ -109,76 +109,9 @@ summary(lm.fit)$sigma
 
 If want to do regression with everything except one variable 
 ```{r}
-# this is the model 
-lm.fit1 = lm(medv~.-age, data = Boston)
-summary(lm.fit1)
-```
-This is an alternative 
-```{r}
-
-lm.fit1 = update(lm.fit, ~.-age)
-lm.fit1
-
+lm.fit
 ```
 
-### Lab 3.6.4
-The syntax lstat:black tells R to inlude an interaction term between lstat and black. 
-lstat*age is shorthand for lstat+age+lstat:age
-```{r}
-summary(lm(medv~lstat*age, data=Boston))
-```
-
-### Lab 3.6.5
-
-```{r}
-lm.fit2 = lm(medv~(lstat+I(lstat^2)))
-summary(lm.fit2)
-```
-The near-zero p-value associated with the quadratic term suggests that
-it leads to an improved model. We use the anova() function to further anova() quantify the extent to which the quadratic fit is superior to the linear fit
-
-```{r}
-lmfit <- lm(medv~lstat)
-anova(lm.fit, lm.fit1)
-```
-
-
-```{r}
-par(mfrow=c(2,2)) #multiple graphs in one
-plot(lm.fit2)
-```
-For polynomials we can use the poly function 
-
-```{r}
-lm.fit5=lm(medv~poly(lstat,5))
-summary(lm.fit5)
-summary(lm(medv~log(rm), data=Boston))
-```
-
-## Exercise 3.6.6
-
-```{r}
-#fix(Carseats)
-names(Carseats)
-```
-
-
-```{r}
-lm.fit <- lm(Sales~.+Income:Advertising+Price:Age, data=Carseats)
-summary(lm.fit)
-plot(lm.fit)
-```
-The contrasts() function returns the coding that R uses for the dummy contrasts() variables.
-```{r}
-attach(Carseats)
-contrasts(ShelveLoc)
-```
-The fact that the coefficient for
-ShelveLocGood in the regression output is positive indicates that a good
-shelving location is associated with high sales (relative to a bad location).
-And ShelveLocMedium has a smaller positive coefficient, indicating that a
-medium shelving location leads to higher sales than a bad shelving location
-but lower sales than a good shelving location.
 
 
 

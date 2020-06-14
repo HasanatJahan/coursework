@@ -3,8 +3,13 @@ title: "ISRS Question Answers and Testing"
 output: html_notebook
 ---
 ######################################
+
 Exercises 2.2 and 2.5
+
 ######################################
+
+
+
 Problem 2.2:
 Of the 34 patients in the control group, 4 were alive at the end of the study. Of the 69 patients in
 the treatment group, 24 were alive. The contingency table below summarizes these results.
@@ -36,6 +41,8 @@ plant program?
 
 
 ########################################
+
+
 Exercise 5.2 
 For figure 1: the data does not have a direct linear trend. It has non-constant variability so it is not fit for linear regression. 
 
@@ -77,12 +84,145 @@ suspicion.
 they drive faster. The gender variable is indeed
 an important confounding variable.
 
+#################################################
 
 
+Exercise 5.20: 
+With the information:
+a. 
+```{r}
+# All in cm 
+mu_shoulder <- 108.20
+sig_shoulder <- 10.37
+mu_height <- 171.14
+sig_height <- 9.41
+R_shoulder_height <- 0.67
+
+b <- ( R_shoulder_height * sig_shoulder )/ sig_height
+b
+
+a <- mu_height - b * mu_shoulder
+a
+
+# the equation: y = a + bx
+
+```
+The equation is y = 91.25023 + 0.7383528x
+
+b. slope, b = 0.7383528
+  intercept,a = 91.25023
+
+c. Calculate R squared 
+```{r}
+R_squared <- R * R 
+R_squared
+```
+The higher the value of R squared the better the model fits the data. A value of 0.5184 means that it might fit the data well about 50%. Half of the observed variation can be explained by the model's input. 
+
+d. shoulder girth of 100cm 
+```{r}
+stu_height <-  (91.25023 + 0.7383528 *100)
+stu_height
+```
+e. Residual = 165.0855 - 160 cm
+```{r}
+residual <- 165.0855 - 160
+residual
+```
+Residual is the leftover variation in data after accounting for model fit 
+
+f. Child has girth 56cm
+```{r}
+child_height <- (91.25023 + 0.7383528 * 56)
+child_height
+
+```
+
+This is an anomaly so not modelled well with the data.
 
 
+Exercise 5.29: 
+Let's try to recreate the plot 
+```{r}
+library(tidyverse)
+library(dplyr)
+body_data <- read.table("body.dat.txt", header = FALSE)
+# columns 23:weight and 24:height contain the weight and 
+#weight_height_df <- body_data[,23:24]
+
+#rename the columns as weight and height
+weight_height_df <- weight_height_df %>% 
+  rename(
+    weight = V23, 
+    height = V24 
+)
+weight_height_df
+
+```
+Let's try to recreate the plot from the question 
+```{r}
+library(ggplot2)
+ggplot(weight_height_df, aes(x = height, y = weight))+
+  geom_point(color = "#7E95F3") +
+  xlab("Height (in cm)") +
+  ylab("Weight (in kg)") +
+  scale_y_continuous() +
+  geom_smooth(method = "lm")
+
+```
+Reproduce the table: 
+Some notes: 
+The lm() function creates a regression model given some formula in the form of Y ~ X + X2
+```{r}
+library(scales)
+library(broom)
+library(modelr)
 
 
+model <- lm(weight ~ height, weight_height_df)
+
+summary(model)
+
+```
+Now answer the questions: 
+a. Height and weight have a positive correlation. For a unit increase in weight, height increases by 1.0176
+Things that I missed: 
+The relationship is positive, moderate-to-strong and linear. There are a few outliers but no points that appear to be influential. 
+
+b.Write the equation of the regression line. Interpret the slope and intercept in context.
+
+Ans: weight = -105.0113 + height*1.0176  
+
+c. Do the data provide strong evidence that an increase in height is associated with an increase
+in weight? State the null and alternative hypotheses, report the p-value, and state your
+conclusion.
+Ans: The data provides strong evidence that an increase in height is associated with an increase in weight as the P-value that something like this would occur outside of this scenario is 0.0000. 
+We can make it a one-sided test:
+The null hypothesis, H0: The true slope of the coefficient of height is zero (beta = 0)
+Alternative hypothesis, hA: The true slope of the coefficient of height is greater is zero (beta > 0)
+
+#### The two sided hypothesis test:
+The p-value for
+the two-sided alternative hypothesis (beta 6= 0) is incredibly small, so the p-value for the one-sided hypothesis will be even smaller. That is, we reject H0. The data provide convincing evidence that height and weight are positively correlated. The true slope parameter is indeed
+greater than 0.
+
+c. R = 0.72
+```{r}
+R <- 0.72
+R_squared <- 0.72 * 0.72
+print(R_squared)
+```
+
+## Chapter 6 
+
+#### Exercise 6.1, 6.2, 6.3
+
+```{r}
+baby_data <- read.table("babyweights.txt")
+baby_data
+```
+
+Now to produce the table 
 
 
 
