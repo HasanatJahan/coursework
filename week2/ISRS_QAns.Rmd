@@ -305,7 +305,7 @@ e. Calculation R_squared and adjusted R_squared
 ```{r}
 var_res <- 249.28
 var_outcome <- 332.57
-R_squared <- 1 - var_res/var_outcome
+R_squared <- 1 - (var_res/var_outcome)
 R_squared
 
 # calculate the adjusted value 

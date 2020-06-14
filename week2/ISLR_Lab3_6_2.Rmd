@@ -183,11 +183,37 @@ but lower sales than a good shelving location.
 
 
 
+## Labs 5.3.1, 5.3.2, 5.3.3
 
+### Lab 5.3.1
 
+```{r}
+library(ISLR)
+library(tidyverse)
+library(dplyr)
+set.seed(42)
+colnames(Auto)
+attach(Auto)
+train <- sample(392, 196)
+#train
+```
+Now we take that subset of data and fit a linear regression model 
+```{r}
+lm.fit.auto <- lm(mpg~horsepower, data = Auto, subset = train)
+par(mfrow=c(2,2))
+plot(lm.fit)
+summary(lm.fit)
+```
 
+We now use the predict() function to estimate the response for all 392
+observations, and we use the mean() function to calculate the MSE of the
+196 observations in the validation set. Note that the -train index below
+selects only the observations that are not in the training set.
 
-
+```{r}
+attach(Auto)
+mean((mpg-predict(lm.fit, Auto))[-train]^2)
+```
 
 
 
