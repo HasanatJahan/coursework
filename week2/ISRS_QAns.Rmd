@@ -219,10 +219,121 @@ print(R_squared)
 
 ```{r}
 baby_data <- read.table("babyweights.txt")
-baby_data
+baby_data 
 ```
 
 Now to produce the table 
+```{r}
+
+summary(weight_smoke_model)
+
+
+```
+Can we plot it to see what is looks like 
+```{r}
+ggplot(baby_data, aes(x = smoke, y = weight, color= smoke))+
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+```{r}
+weight_smoke_model <- lm(weight~smoke, baby_data)
+summary(weight_smoke_model)
+```
+
+
+a. weight_hat = 129.6359 - 2.8122 * smoke 
+
+b. For smokers
+weight_hat = 129.6359 - 2.8122*1 = 126.8237
+For non-smokers:
+weight_hat = 129.6359 - 2.8122*0 = 129.6359
+
+c. H0: beta = 0 
+HA:beta =/= 0 
+As the p value is 0.0236
+The t-value is the estimate divided by their standard errors and the given t vaue is -2.267 and the p-value is 0.0236 so we reject the null hypothesis in favor of the alternative hypothesis. 
+
+
+### Exercise 6.2 
+```{r}
+#Recreate the results in the example 
+weight_parity_model <- lm(weight~parity, baby_data)
+summary(weight_parity_model)
+```
+a. The equation of the regression line:
+weight = 129.7390 - 4.2953 * parity 
+
+b. For first borns :
+weight = 129.7390 - 4.2953 * 0 = 129.7390
+For otherwise:
+weight = 129.7390 - 4.2953 * 1 = 125.4473
+
+c. Ho: beta = 0 
+Ha : beta =/= 0 
+As the p-value is 0.00185 so we reject the null hypothesis in favor of the alternative hypothesis. 
+
+### Exercise 6.3
+Comparing all the values with weight 
+```{r}
+weight_model <- lm(weight~ . ,baby_data)
+summary(weight_model)
+par(mfrow = c(2,2))
+plot(weight_model)
+```
+a. Equation of regression that might include all the variables 
+weight_hat = -107.42291 + 0.06724*bwt + -0.02805*gestation -3.25319 * parity +  0.42734 * age + 3.52377 * height + -1.99493 * smoke 
+
+b. The slope fo gestation is -0.02805 so as gestation increases by one unit, the weight decreases by -0.02805
+As age increases by one unit, the weight increases by 0.42734
+
+c. The coefficient for parity is different than in the linear model shown in Exercise 6.2. Why
+might there be a difference?
+Ans: Parity may be correlated with one of the other in the model, which complicates model estimation 
+
+d. According to the first observation: 
+```{r}
+weight_hat <-   -107.42291 + 0.06724*120 + -0.02805* 284 -3.25319 * 0+  0.42734 * 27 + 3.52377 * 62  + -1.99493 * 0
+weight_hat
+weight_residual <- 100 -weight_hat
+weight_residual
+```
+The model overpredicts the baby's weight by 22.69161 units
+
+
+e. Calculation R_squared and adjusted R_squared 
+```{r}
+var_res <- 249.28
+var_outcome <- 332.57
+R_squared <- 1 - var_res/var_outcome
+R_squared
+
+# calculate the adjusted value 
+num_of_cases <- 1236
+num_of_predictors <-  ncol(baby_data) - 1
+R_squared_adj <- R_squared * (num_of_cases -1)/(num_of_cases - num_of_predictors -1 )
+R_squared_adj
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
