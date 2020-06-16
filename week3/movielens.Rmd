@@ -40,7 +40,8 @@ head(ratings) %>% kable()
 ratings %>% 
   ggplot(aes(x=rating)) +       
   geom_histogram(binwidth = 0.5) + 
-  scale_y_continuous()
+  scale_y_continuous() +
+  labs(x="Rating", y="Number of ratings")
 
 ```
 
@@ -72,7 +73,8 @@ popularity_data %>%
 # hint: try geom_histogram and geom_density
 popularity_data %>% 
   ggplot(aes(x=rating_mean))+
-  geom_density(fill="blue",color="blue")
+  geom_density(fill="blue",color="blue") +
+  labs(x = "Mean Rating by Movie", y ="Density")
 
 ```
 
@@ -94,7 +96,8 @@ rank_by_movie
 rank_by_movie %>%  
   mutate(rank=rank(desc(rating_count))) %>% 
   ggplot(aes(x=rank, y= percentage)) + 
-  geom_line(color="red")
+  geom_line(color="red") +
+  labs(x="Movie Rank", y="CDF")
 
 ```
 
@@ -187,25 +190,13 @@ Nintypct_satisfaction <-
 
 Nintypct_satisfaction
 
-#%>%
-#  ggplot(aes(x=quants, y = cumsum_quant)) +
-#  geom_line()
-
-#selected_100pct <- hundred_percent_satisfaction %>% select(movie_rank, cumsum_ranking_count, movie_rank)
-#selected_100pct
-
-#selected_90pct <- Nintypct_satisfaction %>% select(quants, cumsum_quant, movie_rank)
-#selected_90pct
-
-#joined_df <- selected_100pct %>% full_join(selected_90pct, by="movie_rank")
-
-#joined_df
 
 
 joined_plots <- 
   ggplot() +
   geom_line(data=hundred_percent_satisfaction,aes(x=movie_rank, y=cumsum_ranking_count)) +
-  geom_line(data = Nintypct_satisfaction, aes(x=quants, y = cumsum_quant), color ="blue")
+  geom_line(data = Nintypct_satisfaction, aes(x=quants, y = cumsum_quant), color ="blue") +
+  labs(x="Movie rank", y="User satisfaction percentage")
 
 joined_plots
 
