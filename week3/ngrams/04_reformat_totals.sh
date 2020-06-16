@@ -6,4 +6,4 @@
 
 
 
-sed -e 'y/\t/\n/' googlebooks-eng-all-totalcounts-20120701.txt > total_counts.csv
+sed -e 'y/\t/\n/' googlebooks-eng-all-totalcounts-20120701.txt | tr '[,]' '[\t]' > total_counts.csv
