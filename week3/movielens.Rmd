@@ -153,6 +153,7 @@ mutated_aggregated_by_user <-
 
 movie_id_rank <- rank_by_movie %>% select(movie_id, movie_rank)
 
+# this combines the popularity aggregate data and aggregate by user data
 combined_df <- 
   movie_id_rank %>% 
   left_join(mutated_aggregated_by_user, by="movie_id") %>%
@@ -178,11 +179,14 @@ hundred_percent_satisfaction <-
 
 Nintypct_satisfaction <- 
   combined_df %>%
-  summarize(quants = quantile(movie_rank, probls = 0.9)) %>%
+  summarize(quants = quantile(movie_rank, probs = 0.9)) %>%
   arrange(quants) %>% 
   group_by(quants) %>%
   summarise(quant_count = n()) %>%
   mutate(cumsum_quant = cumsum(quant_count))
+
+Nintypct_satisfaction
+
 #%>%
 #  ggplot(aes(x=quants, y = cumsum_quant)) +
 #  geom_line()
