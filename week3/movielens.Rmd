@@ -174,7 +174,7 @@ hundred_percent_satisfaction <-
   ggplot(aes(x=movie_rank, y=cumsum_ranking_count)) +
   geom_line()
 
-hundred_percent_satisfaction
+
 
 Nintypct_satisfaction <- 
   combined_df %>%
@@ -186,6 +186,7 @@ Nintypct_satisfaction <-
   ggplot(aes(x=quants, y = cumsum_quant)) +
   geom_line()
 
+hundred_percent_satisfaction 
 Nintypct_satisfaction
 
 
