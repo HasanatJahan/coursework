@@ -170,9 +170,9 @@ hundred_percent_satisfaction <-
   arrange(movie_rank) %>% 
   group_by(movie_rank) %>% 
   summarise(rank_count= n()) %>%
-  mutate(cumsum_ranking_count = cumsum(rank_count)) %>%
-  ggplot(aes(x=movie_rank, y=cumsum_ranking_count)) +
-  geom_line()
+  mutate(cumsum_ranking_count = cumsum(rank_count))  #%>%
+#  ggplot(aes(x=movie_rank, y=cumsum_ranking_count)) +
+#  geom_line()
 
 
 
@@ -182,12 +182,27 @@ Nintypct_satisfaction <-
   arrange(quants) %>% 
   group_by(quants) %>%
   summarise(quant_count = n()) %>%
-  mutate(cumsum_quant = cumsum(quant_count)) %>%
-  ggplot(aes(x=quants, y = cumsum_quant)) +
-  geom_line()
+  mutate(cumsum_quant = cumsum(quant_count))
+#%>%
+#  ggplot(aes(x=quants, y = cumsum_quant)) +
+#  geom_line()
 
-hundred_percent_satisfaction 
-Nintypct_satisfaction
+#selected_100pct <- hundred_percent_satisfaction %>% select(movie_rank, cumsum_ranking_count, movie_rank)
+#selected_100pct
 
+#selected_90pct <- Nintypct_satisfaction %>% select(quants, cumsum_quant, movie_rank)
+#selected_90pct
+
+#joined_df <- selected_100pct %>% full_join(selected_90pct, by="movie_rank")
+
+#joined_df
+
+
+joined_plots <- 
+  ggplot() +
+  geom_line(data=hundred_percent_satisfaction,aes(x=movie_rank, y=cumsum_ranking_count)) +
+  geom_line(data = Nintypct_satisfaction, aes(x=quants, y = cumsum_quant), color ="blue")
+
+joined_plots
 
 ```
