@@ -74,8 +74,11 @@ total_counts <-
     total_volume = V2, 
     page_count = V3, 
     book_count = V4
-  )
+  ) 
 
+# filtering out the years to contain years starting from 1800
+year_counts <- year_counts %>% filter(year >= 1800)
+total_counts <- total_counts %>% filter(year >1800)
 
 year_counts 
 total_counts 
@@ -113,15 +116,42 @@ joined_years_and_totals <-
     book_count_match = book_count.x
   )
 
-joined_years_and_totals
+joined_years_and_totals 
+
+joined_with_frequency <- 
+  joined_years_and_totals %>% 
+  mutate(frequency = book_count_year/total_volume) %>%
+  select(term, year, book_count_year, total_volume, frequency)
+
+joined_with_frequency
 
 ```
 
 ## Plot the main figure 3a
 
-Plot the proportion of mentions for the terms "1883", "1910", and "1950" over time from 1850 to 2012, as in the main figure 3a of the original paper. Use the `percent` function from the `scales` package for a readable y axis. Each term should have a different color, it's nice if these match the original paper but not strictly necessary.
+Plot the proportion of mentions for the terms "1883", "1910", and "1950" over time from 1850 to 2012, as in the main figure 3a of the original paper. 
+
+Use the `percent` function from the `scales` package for a readable y axis. Each term should have a different color, it's nice if these match the original paper but not strictly necessary.
 
 ```{r plot-proportion-over-time}
+
+plot_3a <- 
+joined_years_and_totals %>% 
+  mutate(frequency = volume/total_volume, 
+         term_as_factor = as.character(term))%>% 
+  filter(term == c(1883,1910, 1950)) %>%
+  ggplot() + 
+  geom_line(
+    aes(x=year, 
+        y=frequency,
+        color=term_as_factor)) +
+  scale_y_continuous(labels= scales::percent) +
+  labs(
+    x="Year",
+    y= "Frequency"
+  )
+
+plot_3a
 
 ```
 
@@ -181,6 +211,9 @@ Write up your answer to Part E here.
 For each year term, find the year where its proportion of mentions peaks (hits its highest value). Store this in an intermediate dataframe.
 
 ```{r compute-peaks}
+
+
+
 
 ```
 
