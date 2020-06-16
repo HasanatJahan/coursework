@@ -46,18 +46,50 @@ Then edit the `03_download_totals.sh` file to down the `googlebooks-eng-all-tota
 
 ## Load the cleaned data
 
-Load in the `year_counts.tsv` and `total_counts.csv` files. Use the `here()` function around the filename to keep things portable.Give the columns of `year_counts.tsv` the names `term`, `year`, `volume`, and `book_count`. Give the columns of `total_counts.csv` the names `year`, `total_volume`, `page_count`, and `book_count`. Note that column order in these files may not match the examples in the documentation.
+Load in the `year_counts.tsv` and `total_counts.csv` files. 
+
+Use the `here()` function around the filename to keep things portable.
+
+Give the columns of `year_counts.tsv` the names `term`, `year`, `volume`, and `book_count`.
+
+Give the columns of `total_counts.csv` the names `year`, `total_volume`, `page_count`, and `book_count`. Note that column order in these files may not match the examples in the documentation.
 
 ```{r load-counts}
 library(readr)
-total_counts <- read.csv("total_counts.csv")
+total_counts <- read.table("total_counts.csv")
+year_counts <- read.table("year_counts.tsv")
+
+year_counts <-  year_counts %>% 
+  rename(
+    term = V1, 
+    year = V2, 
+    volume = V3, 
+    book_count = V4
+  )
+
+total_counts <- 
+  total_counts %>% 
+  rename(
+    year = V1, 
+    total_volume = V2, 
+    page_count = V3, 
+    book_count = V4
+  )
 
 
+year_counts 
+total_counts 
 ```
 
 ## Your written answer
 
 Add a line below using Rmarkdown's inline syntax to print the total number of lines in each dataframe you've created.
+
+```{r}
+nrow(year_counts)
+nrow(total_counts)
+```
+
 
 # Part B
 
@@ -69,6 +101,19 @@ Join the raw year term counts with the total counts and divide to get a proporti
 
 ```{r join-years-and-totals}
 
+joined_years_and_totals <- 
+  year_counts %>% 
+  left_join(total_counts, by="year") %>%
+  group_by("term") 
+
+joined_years_and_totals <- 
+  joined_years_and_totals %>%
+  rename(
+    book_count_year = book_count.y,
+    book_count_match = book_count.x
+  )
+
+joined_years_and_totals
 
 ```
 
