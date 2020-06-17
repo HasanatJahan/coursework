@@ -153,7 +153,7 @@ plot_3a
 ## Your written answer
 
 Write up your answer to Part B here.
-
+Yes, it does produce similar results. There is a peak at the year of term and then it goes down as the years go by to go up again. 
 
 # Part C
 

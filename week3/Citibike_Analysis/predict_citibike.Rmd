@@ -1,0 +1,68 @@
+---
+title: "Predict Citibike"
+output: html_notebook
+---
+
+First load in the data from the 
+
+```{r}
+trips_per_day <- read.table('trips_per_day.tsv', header = TRUE)
+trips_per_day
+```
+
+Now split the data 
+80% for training the model 
+10% for validation 
+10% for final test set 
+Reference used: https://stackoverflow.com/questions/36068963/r-how-to-split-a-data-frame-into-training-validation-and-test-sets
+
+```{r}
+set.seed(42)
+
+num_days <- nrow(trips_per_day)
+# set out the the fractions that you need to train
+frac_train <- 0.8
+frac_validation <- 0.1
+frac_test <- 0.1 
+
+# compute sample sizes 
+sample_size_train <- floor(num_days * frac_train)
+sample_size_validation <- floor(num_days * frac_validation)
+sample_size_test <- floor(num_days * frac_test)
+
+# randomly sample rows for the training set without replacement - he named this ndx
+indices_traning <- sample(1:num_days, sample_size_train, replace = FALSE)
+
+# setdiff() used to avoid overlapping subsets of indices 
+indices_not_training <- setdiff(seq_len(num_days), indices_traning)
+
+# now to find the validation and test indices 
+indices_validation <- sample(indices_not_training, size = sample_size_validation)
+indices_test <- setdiff(indices_not_training, indices_validation)
+
+
+# used to fit the model 
+trips_per_day_train <- trips_per_day[indices_traning, ]
+trips_per_day_validation <- trips_per_day[indices_validation, ]
+
+# Restricted access - don't look!
+trips_per_day_test <- trips_per_day[indices_test, ]
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
