@@ -226,7 +226,8 @@ I think that I would re-evaluate Michel's claims. As the frequency the mentions 
 
 # Part F
 
-> Now, using the proportion of mentions, replicate the inset of figure 3a. That is, for each year between 1875 and 1975, calculate the half-life of that year. The half-life is defined to be the number of years that pass before the proportion of mentions reaches half its peak value. Note that Michel et al. (2011) do something more complicated to estimate the half-life—see section III.6 of the Supporting Online Information—but they claim that both approaches produce similar results. Does version 2 of the NGram data produce similar results to those presented in Michel et al. (2011), which are based on version 1 data? (Hint: Don’t be surprised if it doesn’t.)
+> Now, using the proportion of mentions, replicate the inset of figure 3a. That is, for each year between 1875 and 1975, calculate the half-life of that year. The half-life is defined to be the number of years that pass before the proportion of mentions reaches half its peak value. 
+Note that Michel et al. (2011) do something more complicated to estimate the half-life—see section III.6 of the Supporting Online Information—but they claim that both approaches produce similar results. Does version 2 of the NGram data produce similar results to those presented in Michel et al. (2011), which are based on version 1 data? (Hint: Don’t be surprised if it doesn’t.)
 
 ## Compute peak mentions
 
@@ -268,18 +269,14 @@ Plot the half-life of each term over time from 1850 to 2012. Each point should r
 
 ```{r plot-half-lifes}
 
-specific_years <- 
-  half_life_df %>%
-  mutate(term_as_factor = as.character(term))%>%
-  filter(term == c(1833, 1910, 1950))
-
-specific_years
+years <- c(1883, 1910, 1950)
 
 half_life_df %>%
   mutate(term_as_factor= as.character(term)) %>%
-  filter(year>= 1850 & year <=2012) %>%
+  filter(year>= 1850 & year <=2012) %>% 
+  filter(half_life >= 0) %>%
   ggplot(aes(x=term, y=half_life)) + 
-  geom_point() +
+  geom_point(aes(color = (term == years), size = (term == years))) +
   geom_smooth(method = "lm") +
   labs(
     x = "Year",
@@ -300,6 +297,8 @@ Write up your answer to Part F here.
 ## Your written answer
 
 Write up your answer to Part G here. Include code that shows the years with the smallest and largest half-lifes.
+
+
 
 # Makefile
 
