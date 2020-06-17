@@ -96,7 +96,8 @@ nrow(total_counts)
 
 # Part B
 
-> Recreate the main part of figure 3a of Michel et al. (2011). To recreate this figure, you will need two files: the one you downloaded in part (a) and the “total counts” file, which you can use to convert the raw counts into proportions. Note that the total counts file has a structure that may make it a bit hard to read in. Does version 2 of the NGram data produce similar results to those presented in Michel et al. (2011), which are based on version 1 data?
+> Recreate the main part of figure 3a of Michel et al. (2011). To recreate this figure, you will need two files: the one you downloaded in part (a) and the “total counts” file, which you can use to convert the raw counts into proportions. Note that the total counts file has a structure that may make it a bit hard to read in. 
+Does version 2 of the NGram data produce similar results to those presented in Michel et al. (2011), which are based on version 1 data?
 
 ## Join ngram year counts and totals
 
@@ -118,12 +119,6 @@ joined_years_and_totals <-
 
 joined_years_and_totals 
 
-joined_with_frequency <- 
-  joined_years_and_totals %>% 
-  mutate(frequency = book_count_year/total_volume) %>%
-  select(term, year, book_count_year, total_volume, frequency)
-
-joined_with_frequency
 
 ```
 
@@ -159,6 +154,7 @@ plot_3a
 
 Write up your answer to Part B here.
 
+
 # Part C
 
 > Now check your graph against the graph created by the [NGram Viewer](https://books.google.com/ngrams/).
@@ -169,7 +165,7 @@ Go to the ngram viewer, enter the terms "1883", "1910", and "1950" and take a sc
 
 ## Your written answer
 
-Add your screenshot for Part C below this line using the `![](figure_filename.png)` syntax and comment on similarities / differences.
+Add your screenshot for Part C below this line using the `![](Ngram_viewer_screenshot.png)` syntax and comment on similarities / differences.
 
 
 # Part D
@@ -181,6 +177,23 @@ Add your screenshot for Part C below this line using the `![](figure_filename.pn
 Plot the raw counts for the terms "1883", "1910", and "1950" over time from 1850 to 2012. Use the `comma` function from the `scales` package for a readable y axis. The colors for each term should match your last plot, and it's nice if these match the original paper but not strictly necessary.
 
 ```{r plot-raw-mentions-over-time}
+
+plot_D <- 
+joined_years_and_totals %>% 
+  mutate(term_as_factor = as.character(term))%>% 
+  filter(term == c(1883,1910, 1950)) %>%
+  ggplot() + 
+  geom_line(
+    aes(x=year, 
+        y=volume,
+        color=term_as_factor)) +
+  scale_y_continuous() +
+  labs(
+    x="Year",
+    y= "Raw Count"
+  )
+
+plot_D
 
 ```
 
@@ -196,11 +209,20 @@ Plot the total counts for each year over time, from 1850 to 2012. Use the `comma
 
 ```{r plot-totals}
 
+colnames(joined_years_and_totals)
+
+joined_years_and_totals %>% 
+  select(year, total_volume) %>% 
+  ggplot() +
+  geom_line(aes(x=year, y=total_volume)) + scale_y_continuous(label = comma)
+
 ```
 
 ## Your written answer
 
 Write up your answer to Part E here.
+
+I think that I would re-evaluate Michel's claims. As the frequency the mentions does decrease over time, we should account that the total volume of books per year does increase by a lot, exponentially even. By the raw counts data, for 1883 and 1910, while there is an inital dip of the mentions, it actually incrseses beyond it's first peak going after 2000s. For 1950, while there is an initial dip in the first 50 years after it's peak like for 1910 and 1883, it shows the trend of increase. 
 
 # Part F
 
@@ -211,10 +233,14 @@ Write up your answer to Part E here.
 For each year term, find the year where its proportion of mentions peaks (hits its highest value). Store this in an intermediate dataframe.
 
 ```{r compute-peaks}
+max_year_per_term <- 
+joined_years_and_totals %>% 
+  select(term, year, volume) %>%
+  group_by(term) %>% 
+  arrange(term, desc(volume))  %>%
+  top_n(n=1, wt=volume)
 
-
-
-
+max_year_per_term
 ```
 
 ## Compute half-lifes
@@ -222,6 +248,16 @@ For each year term, find the year where its proportion of mentions peaks (hits i
 Now, for each year term, find the minimum number of years it takes for the proportion of mentions to decline from its peak value to half its peak value. Store this in an intermediate data frame.
 
 ```{r compute-half-lifes}
+half_life_df <- 
+ joined_years_and_totals %>% 
+  select(term, year, volume) %>%
+  group_by(term) %>% 
+  mutate(half_quant = quantile(volume, 0.50)) %>% 
+  filter(volume == half_quant) %>%
+  mutate(half_life = (year - term)) %>%
+  arrange(term)
+
+half_life_df
 
 ```
 
@@ -231,6 +267,25 @@ Plot the half-life of each term over time from 1850 to 2012. Each point should r
 
 
 ```{r plot-half-lifes}
+
+specific_years <- 
+  half_life_df %>%
+  mutate(term_as_factor = as.character(term))%>%
+  filter(term == c(1833, 1910, 1950))
+
+specific_years
+
+half_life_df %>%
+  mutate(term_as_factor= as.character(term)) %>%
+  filter(year>= 1850 & year <=2012) %>%
+  ggplot(aes(x=term, y=half_life)) + 
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    x = "Year",
+    y = "Half-life (yrs)"
+  )
+
 
 ```
 
