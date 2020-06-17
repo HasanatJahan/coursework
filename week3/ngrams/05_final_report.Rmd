@@ -236,11 +236,13 @@ For each year term, find the year where its proportion of mentions peaks (hits i
 ```{r compute-peaks}
 max_year_per_term <- 
 joined_years_and_totals %>% 
-  select(term, year, volume) %>% 
-  filter(year <= 2000) %>%
+  mutate(frequency = volume/total_volume, 
+         term_as_factor = as.character(term)) %>%
+  select(term, year, frequency) %>% 
+  filter(year > 1800 & year <= 2000) %>%
   group_by(term) %>% 
-  arrange(term, desc(volume))  %>%
-  top_n(n=1, wt=volume)
+  arrange(term, desc(frequency))  %>%
+  top_n(n=1, wt=frequency)
 
 max_year_per_term
 ```
@@ -251,14 +253,27 @@ Now, for each year term, find the minimum number of years it takes for the propo
 
 ```{r compute-half-lifes}
 half_life_df <- 
- joined_years_and_totals %>% 
-  select(term, year, volume) %>%
-  filter(year <= 2000) %>%
+  joined_years_and_totals %>%
+  mutate(frequency = volume/total_volume, 
+         term_as_factor = as.character(term)) %>%
+  select(term, year, frequency) %>% 
+  filter(year > 1800 & year <= 2000) %>%
   group_by(term) %>% 
-  mutate(half_quant = quantile(volume, 0.50)) %>% 
-  filter(volume == half_quant) %>%
-  mutate(half_life = (year - term)) %>%
-  arrange(term)
+  arrange(term, desc(frequency)) %>%
+  mutate(max_frequency = quantile(frequency, 1.0)) %>%
+  mutate(percentage = floor(frequency/max_frequency * 100)) %>%
+  filter(percentage == 50) 
+
+
+  #mutate(frequency = volume/total_volume, 
+   #      term_as_factor = as.character(term)) %>%
+  #select(term, year, frequency) %>%
+  #filter(y > 1800 & year <= 2000) %>%
+  #group_by(term) %>% 
+#  mutate(half_quant = quantile(volume, 0.50)) %>% 
+  #filter(volume == half_quant) %>%
+  #mutate(half_life = (year - term)) %>%
+  #arrange(term)
 
 half_life_df
 
@@ -275,7 +290,7 @@ years <- c(1883, 1910, 1950)
 
 half_life_df %>%
   mutate(term_as_factor= as.character(term)) %>%
-  filter(year>= 1850 & year <=2012) %>% 
+  filter(year>= 1850 & year <=2012 & year > term) %>% 
   filter(half_life >= 0) %>%
   ggplot(aes(x=term, y=half_life)) + 
   geom_point() +

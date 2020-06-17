@@ -1,5 +1,5 @@
 ---
-title: "Predict Citibike"
+title: "Predict Citibike Rides"
 output: html_notebook
 ---
 
@@ -17,7 +17,7 @@ Now split the data
 Reference used: https://stackoverflow.com/questions/36068963/r-how-to-split-a-data-frame-into-training-validation-and-test-sets
 
 ```{r}
-set.seed(42)
+set.seed(2)
 
 num_days <- nrow(trips_per_day)
 # set out the the fractions that you need to train
@@ -43,19 +43,75 @@ indices_test <- setdiff(indices_not_training, indices_validation)
 
 # used to fit the model 
 trips_per_day_train <- trips_per_day[indices_traning, ]
-trips_per_day_validation <- trips_per_day[indices_validation, ]
+trips_per_day_validate <- trips_per_day[indices_validation, ]
 
 # Restricted access - don't look!
 trips_per_day_test <- trips_per_day[indices_test, ]
 
+# we can see the rest of the data
+trips_per_day_train
+trips_per_day_validate
 
 
 
 ```
 
+Start out with the model in that notebook, which uses only the minimum temperature on each day to predict the number of trips taken that day. Try different polynomial degrees in the minimum temperature and check that you get results similar to what's in that notebook, although they likely won't be identical due to shuffling of which days end up in the train, validation, and test splits. Quantify your performance using root mean-squared error.
+
+Now we try plottign minimum temperature with the number of trips for different polynomial degrees
+
+```{r}
+# fitting a model for each polynomial degree
+degree <- 1:8
+
+# set the vectors to hold the training and validation errors
+train_err <- c()
+validate_err <- c()
+
+for(deg in degree){
+  
+  # fit on training data 
+  model <- lm(num_trips ~ poly(tmin, deg, raw =TRUE), data = trips_per_day_train)
+  
+  #par(mfrow= c(2,2))
+  #plot(model)
+  
+  # using mean squared error
+  # evaluate on training data  
+  train_err[deg] <- sqrt(mean((predict(model, trips_per_day_train) - trips_per_day_train$num_trips)^2))
+  
+  #evaluate on validate data
+  validate_err[deg] <- sqrt(mean((predict(model, trips_per_day_validate) - trips_per_day_validate$num_trips)^2))
 
 
+}
 
+train_err
+validate_err
+
+# Calculate RMSE
+
+```
+
+Now to plot the two errors together 
+Note for me:
+Gather takes multiple columns and collapses into key-value pairs, duplicating all other columns as needed. You use gather() when you notice that you have columns that are not variables.
+```{r}
+# this takes the degrees and separates the training and validation error 
+plot_data <- 
+  data.frame(degree, train_err, validate_err) %>% 
+  gather("split", "error", -degree)
+
+# Now let's plot 
+plot_data %>%
+  ggplot(aes(x=degree, y= error, color = split)) +
+  geom_line() +
+  scale_x_continuous(breaks = degree) +
+  xlab("Polynomial degree") +
+  ylab("RMSE")
+
+  
+```
 
 
 
