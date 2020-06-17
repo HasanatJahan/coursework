@@ -174,9 +174,7 @@ hundred_percent_satisfaction <-
   arrange(movie_rank) %>% 
   group_by(movie_rank) %>% 
   summarise(rank_count= n()) %>%
-  mutate(cumsum_ranking_count = cumsum(rank_count))  #%>%
-#  ggplot(aes(x=movie_rank, y=cumsum_ranking_count)) +
-#  geom_line()
+  mutate(cumsum_ranking_count = cumsum(rank_count))  
 
 
 

@@ -236,7 +236,8 @@ For each year term, find the year where its proportion of mentions peaks (hits i
 ```{r compute-peaks}
 max_year_per_term <- 
 joined_years_and_totals %>% 
-  select(term, year, volume) %>%
+  select(term, year, volume) %>% 
+  filter(year <= 2000) %>%
   group_by(term) %>% 
   arrange(term, desc(volume))  %>%
   top_n(n=1, wt=volume)
@@ -252,6 +253,7 @@ Now, for each year term, find the minimum number of years it takes for the propo
 half_life_df <- 
  joined_years_and_totals %>% 
   select(term, year, volume) %>%
+  filter(year <= 2000) %>%
   group_by(term) %>% 
   mutate(half_quant = quantile(volume, 0.50)) %>% 
   filter(volume == half_quant) %>%
@@ -276,7 +278,7 @@ half_life_df %>%
   filter(year>= 1850 & year <=2012) %>% 
   filter(half_life >= 0) %>%
   ggplot(aes(x=term, y=half_life)) + 
-  geom_point(aes(color = (term == years), size = (term == years))) +
+  geom_point() +
   geom_smooth(method = "lm") +
   labs(
     x = "Year",
@@ -297,7 +299,10 @@ Write up your answer to Part F here.
 ## Your written answer
 
 Write up your answer to Part G here. Include code that shows the years with the smallest and largest half-lifes.
-
+It seems that years around 1810, around 1835 and the years around 1850 seem like outliers, and they were forgotten particularly quickly. 
+As according to US history, 1810 was not a historically significant year, around 1825 there was not a lot of political change, same for 1850 and 1852. 
+It seems that there might not have been a lot of impactful political events during these times and the mention of these years in books might be linked to the political significance of the years. 
+Further investigation required. 
 
 
 # Makefile
