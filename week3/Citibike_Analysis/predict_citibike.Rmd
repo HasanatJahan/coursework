@@ -755,6 +755,11 @@ _____________________________________________________________________
 ## Save the final model!
 ```{r}
 
+# create a function for your data transformation
+
+save(model_09, file = 'final_model.RData')
+
+
 ```
 
 
