@@ -762,11 +762,33 @@ save(model_09, file = 'final_model.RData')
 
 ```
 
+___________________________________________
+## Now testing on test data 
 
 
+```{r}
+
+rmse(model_09, trips_per_day_test)
 
 
+trips_per_day_test <- 
+  trips_per_day_validate %>%
+  add_predictions(model_09)  
 
+
+trips_per_day_test %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(y=num_trips)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+```
+
+
+Results:
+The RMSE on the test data is 3232.411
+And the actual and predicted line is a diagonal linear line which is ideal.
 
 
 
