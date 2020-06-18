@@ -18,16 +18,58 @@ trips_per_day
 library(lubridate)
 trips_per_day %>% select(ymd, date)
 
-
+# this creates columns to indicate day of week, month and if it's a weekend or not 
 trips_per_day <-  
   trips_per_day %>%
-  mutate(month = month(ymd), day = wday(ymd)) %>%
-  mutate(weekend = ifelse(day == 1 | day == 7, 1, 0))
-
-trips_per_day
+  mutate(month = month(ymd), day_of_week = as.factor(wday(ymd))) %>%
+  mutate(weekend = ifelse(day_of_week == 1 | day_of_week == 7, 1, 0)) %>% 
+  mutate(is_rain = ifelse(prcp > 0.5, 1, 0))
 
 
 ```
+
+After doing data wrangling outside, joining the holidays file 
+```{r}
+library(readr)
+holidays <- read_delim("holidays.csv", "\t", 
+    escape_double = FALSE, col_names = FALSE) 
+
+holidays <- 
+  holidays %>%
+  rename(
+    holiday_num = X1, 
+    ymd = X2, 
+    holiday = X3 
+  )
+
+holidays <- 
+  holidays %>%
+  mutate(ymd = as.character(ymd))
+
+holidays
+
+```
+Join the holiday data and create a column for whether a day is a holiday or not 
+```{r}
+trips_per_day <- 
+  trips_per_day %>% 
+  left_join(holidays)
+
+trips_per_day
+
+# create a column for whether a day is a holiday or not 
+trips_per_day <-
+  trips_per_day %>%
+  mutate(holiday = ifelse(!is.na(holiday), 1, 0))
+
+trips_per_day
+
+```
+
+
+
+-------------------------------------------------
+## Split the data 
 
 Now split the data 
 80% for training the model 
@@ -74,6 +116,8 @@ trips_per_day_validate
 
 
 ```
+_________________________________________________________
+## Let's get to modeling
 
 Start out with the model in that notebook, which uses only the minimum temperature on each day to predict the number of trips taken that day. Try different polynomial degrees in the minimum temperature and check that you get results similar to what's in that notebook, although they likely won't be identical due to shuffling of which days end up in the train, validation, and test splits. Quantify your performance using root mean-squared error.
 
@@ -181,25 +225,13 @@ colnames(trips_per_day)
 ```
 
 
-After doing data wrangling outside, joining the holidays file 
-```{r}
-holidays <- read.csv("holidays.csv", header=F)
-holidays
-
-
-
-```
-## Todo: join the holiday data
-
+----------------------------------------------------
 
 ## Weather model: Model 1: This model looks at effects of weather alone with precipitation, snow, maximum temperature and minimum temperature
 ```{r}
 
 weather_model <- lm(num_trips ~ prcp*snwd + tmax*tmin, trips_per_day_train)
 summary(weather_model)
-
-
-glance(weather_model)
 
 ```
 To evaluate the performance of the model. 
@@ -237,31 +269,31 @@ How do the days of the week affect number of trips?
 ```{r}
 
 trips_per_day_train %>% 
-  ggplot(aes(x=day, y=num_trips)) +
+  ggplot(aes(x=day_of_week, y=num_trips)) +
   geom_point(aes(color = tmin))
 
 ```
-Now let's create the model between weekend and taking twekas from the previous model 
+Now let's create the model between weekend and taking tweaks from the previous model 
 ```{r}
 #model_2 <- lm(num_trips ~ weekend + prcp*snwd + tmax*tmin, trips_per_day_train)
 #summary(model_2)
 # RMSE: 4545.876
 # R-squared: 0.8604
 
-model_2 <- lm(num_trips ~ weekend + prcp + snwd + tmax +tmin, trips_per_day_train)
-summary(model_2)
-# RMSE: 4545.876
-# R-squared: 0.8565
+model_02 <- lm(num_trips ~ weekend + prcp + snwd + tmax +tmin, trips_per_day_train)
+summary(model_02)
+# RMSE: 3895.621
+# R-squared: 0.859
 
 # modifying model_2 based on the the summary
 trips_per_day_train <- 
   trips_per_day_train %>%
-  add_predictions(model_2) %>%
+  add_predictions(model_02) %>%
   mutate(split = "train")
 
 trips_per_day_validate <- 
   trips_per_day_validate %>%
-  add_predictions(model_2) %>% 
+  add_predictions(model_02) %>% 
   mutate(split = "validate")
 
 plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
@@ -274,11 +306,12 @@ plot_data %>%
   ylab("Actual")
 
 # calculate the rmse - the values don't look too different
-rmse(weather_model, plot_data)
+rmse(model_02, plot_data)
 
 ```
 
-Now let's use the simpler model and testing with the different polynomials for precipitation
+-----------------------------------------------------------
+Model 03: Now let's use the simpler model and testing with the different polynomials for precipitation
 
 ```{r}
 # fitting a model for each polynomial degree
@@ -291,7 +324,7 @@ validate_err <- c()
 for(deg in degree){
   
   # fit on training data 
-  model_03 <- lm(num_trips ~ poly(prcp, deg, raw =TRUE) + weekend + snwd + tmax +tmin, data = trips_per_day_train)
+  model_03 <- lm(num_trips ~ poly(prcp, deg, raw =TRUE) + weekend + tmax + snwd + tmin, data = trips_per_day_train)
 
   
   # using mean squared error
@@ -300,7 +333,6 @@ for(deg in degree){
   
   #evaluate on validate data
   validate_err[deg] <- sqrt(mean((predict(model_03, trips_per_day_validate) - trips_per_day_validate$num_trips)^2))
-
 
 }
 
@@ -318,25 +350,108 @@ plot_data %>%
   ylab("RMSE")
 
 
+
 ```
 
 
+Let's stay with polynomial degree 3 for precipitation to stay on the safe side for overfitting 
+```{r}
+model_03 <- lm(num_trips ~ poly(prcp, 3, raw =TRUE) + weekend + tmax + snwd + tmin, data = trips_per_day_train)
 
+# modifying model_02 based on the the summary
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(model_03) %>%
+  mutate(split = "train")
 
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(model_03) %>% 
+  mutate(split = "validate")
 
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
 
+plot_data %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(color=split)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
 
+summary(model_03)
+rmse(model_03, plot_data)
 
+# RMSE: 3607.688
+# R-squared: 0.8778
+```
+With this slightly more complicated model, we're getting a slightly better RMSE 
+Model_03:
+RMSE: 3607.688
+R-squared: 0.8878
 
+--------------------------------------------------------
 
+Model 04: Tweak of the model before but accounting day of the week and whether it was a holiday or not 
+```{r}
+model_04 <- lm(num_trips ~ weekend + tmax +tmin + day_of_week + holiday, trips_per_day_train)
 
+summary(model_04)
 
+# there's NA as a variable for day 6 which indicate dthat the variable in question is linearly related to the other variables. If this is the case, then there's no unique solution to the regression without dropping one of the variables 
+```
+Now how can we decide an amount of rain as substantial
+```{r}
 
+trips_per_day %>% 
+  ggplot(aes(x=prcp, y=num_trips)) +
+  geom_point(aes(color=tmin)) +
+  facet_wrap(~ weekend) +
+  geom_smooth(method = "lm")
 
+```
+Let's decide substantial precipitation is precipitation greater than 
+```{r}
+model_05 <- lm(num_trips ~  is_rain*weekend + tmax + tmin + day_of_week + holiday + month, trips_per_day_train)
 
+summary(model_05)
 
+# now testing
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(model_05) %>%
+  mutate(split = "train")
 
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(model_05) %>% 
+  mutate(split = "validate")
 
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
+
+plot_data %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(color=split)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+summary(model_05)
+rmse(model_05, plot_data)
+
+# RMSE: 3933.667
+# R_squared: 0.8585
+
+```
+Does the ratio of tmax and tmin have an effect?
+```{r}
+trips_per_day_train %>% 
+  mutate(temp_ratio = tmax/tmin) %>%
+  ggplot(aes(x=temp_ratio, y=num_trips)) +
+  geom_point() 
+
+```
+
+There does not seem to be a direct correlation so I'm not going to incorporate that 
 
 
 
