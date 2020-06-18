@@ -6,8 +6,27 @@ output: html_notebook
 First load in the data from the 
 
 ```{r}
+library(tidyverse)
+
 trips_per_day <- read.table('trips_per_day.tsv', header = TRUE)
 trips_per_day
+
+
+
+#Updating my dataframe to include additional features 
+#Feature for month, day and and weekend 
+library(lubridate)
+trips_per_day %>% select(ymd, date)
+
+
+trips_per_day <-  
+  trips_per_day %>%
+  mutate(month = month(ymd), day = wday(ymd)) %>%
+  mutate(weekend = ifelse(day == 1 | day == 7, 1, 0))
+
+trips_per_day
+
+
 ```
 
 Now split the data 
@@ -89,7 +108,6 @@ for(deg in degree){
 train_err
 validate_err
 
-# Calculate RMSE
 
 ```
 
@@ -112,6 +130,214 @@ plot_data %>%
 
   
 ```
+
+Now to fit the data and the model together. I choose the 4th degree polynomial to stay on the safe side and not do overfitting
+
+```{r}
+library(dplyr)
+library(modelr)
+library(broom)
+
+model <- lm(num_trips ~ poly(tmin, 4, raw = T), data = trips_per_day_train)
+
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(model) %>%
+  mutate(split = "train")
+
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(model) %>% 
+  mutate(split = "validate")
+
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
+
+
+plot_data %>%
+ggplot(aes(x = tmin, y = num_trips)) +
+  geom_point(aes(color = split)) +
+  geom_line(aes(y = pred)) +
+  xlab('Minimum temperature') +
+  ylab('Daily trips') +
+  scale_y_continuous()
+
+
+trips_per_day_train
+rmse(model, plot_data)
+
+
+```
+
+```{r}
+tidy(model)
+glance(model)
+```
+
+
+Let's see what we're working with I keep forgetting
+
+```{r}
+colnames(trips_per_day)
+```
+
+
+After doing data wrangling outside, joining the holidays file 
+```{r}
+holidays <- read.csv("holidays.csv", header=F)
+holidays
+
+
+
+```
+## Todo: join the holiday data
+
+
+## Weather model: Model 1: This model looks at effects of weather alone with precipitation, snow, maximum temperature and minimum temperature
+```{r}
+
+weather_model <- lm(num_trips ~ prcp*snwd + tmax*tmin, trips_per_day_train)
+summary(weather_model)
+
+
+glance(weather_model)
+
+```
+To evaluate the performance of the model. 
+```{r}
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(weather_model) %>%
+  mutate(split = "train")
+
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(weather_model) %>% 
+  mutate(split = "validate")
+
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
+
+plot_data %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(color=split)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+# calculate the rmse - the values don't look too different
+rmse(weather_model, trips_per_day_train)
+rmse(weather_model, trips_per_day_validate)
+rmse(weather_model, plot_data)
+
+```
+
+---------------------------------------------------------
+
+## Days of the week model: Model 2:
+How do the days of the week affect number of trips?
+```{r}
+
+trips_per_day_train %>% 
+  ggplot(aes(x=day, y=num_trips)) +
+  geom_point(aes(color = tmin))
+
+```
+Now let's create the model between weekend and taking twekas from the previous model 
+```{r}
+#model_2 <- lm(num_trips ~ weekend + prcp*snwd + tmax*tmin, trips_per_day_train)
+#summary(model_2)
+# RMSE: 4545.876
+# R-squared: 0.8604
+
+model_2 <- lm(num_trips ~ weekend + prcp + snwd + tmax +tmin, trips_per_day_train)
+summary(model_2)
+# RMSE: 4545.876
+# R-squared: 0.8565
+
+# modifying model_2 based on the the summary
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(model_2) %>%
+  mutate(split = "train")
+
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(model_2) %>% 
+  mutate(split = "validate")
+
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
+
+plot_data %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(color=split)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+# calculate the rmse - the values don't look too different
+rmse(weather_model, plot_data)
+
+```
+
+Now let's use the simpler model and testing with the different polynomials for precipitation
+
+```{r}
+# fitting a model for each polynomial degree
+degree <- 1:8
+
+# set the vectors to hold the training and validation errors
+train_err <- c()
+validate_err <- c()
+
+for(deg in degree){
+  
+  # fit on training data 
+  model_03 <- lm(num_trips ~ poly(prcp, deg, raw =TRUE) + weekend + snwd + tmax +tmin, data = trips_per_day_train)
+
+  
+  # using mean squared error
+  # evaluate on training data  
+  train_err[deg] <- sqrt(mean((predict(model_03, trips_per_day_train) - trips_per_day_train$num_trips)^2))
+  
+  #evaluate on validate data
+  validate_err[deg] <- sqrt(mean((predict(model_03, trips_per_day_validate) - trips_per_day_validate$num_trips)^2))
+
+
+}
+
+# this takes the degrees and separates the training and validation error 
+plot_data <- 
+  data.frame(degree, train_err, validate_err) %>% 
+  gather("split", "error", -degree)
+
+# Now let's plot 
+plot_data %>%
+  ggplot(aes(x=degree, y= error, color = split)) +
+  geom_line() +
+  scale_x_continuous(breaks = degree) +
+  xlab("Polynomial degree for Precipitation") +
+  ylab("RMSE")
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

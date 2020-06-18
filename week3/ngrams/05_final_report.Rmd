@@ -284,8 +284,9 @@ Plot the half-life of each term over time from 1850 to 2012. Each point should r
 years <- c(1883, 1910, 1950)
 
 half_life_df %>%
+  filter(year > 1850 & year <= 2012 & year > term) %>% 
+  #filter(term >= 1850) %>%
   mutate(term_as_factor= as.character(term)) %>%
-  filter(year>= 1850 & year <=2012 & year > term) %>% 
   ggplot(aes(x=term, y=half_life)) + 
   geom_point() +
   geom_smooth(method = "lm") +
