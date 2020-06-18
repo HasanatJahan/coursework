@@ -7,10 +7,10 @@ First load in the data from the
 
 ```{r}
 library(tidyverse)
+library(lubridate)
 
 trips_per_day <- read.table('trips_per_day.tsv', header = TRUE)
 trips_per_day
-
 
 
 #Updating my dataframe to include additional features 
@@ -21,10 +21,14 @@ trips_per_day %>% select(ymd, date)
 # this creates columns to indicate day of week, month and if it's a weekend or not 
 trips_per_day <-  
   trips_per_day %>%
-  mutate(month = month(ymd), day_of_week = as.factor(wday(ymd))) %>%
+  mutate(month = as.factor(month(ymd)), day_of_week = as.factor(wday(ymd))) %>%
   mutate(weekend = ifelse(day_of_week == 1 | day_of_week == 7, 1, 0)) %>% 
-  mutate(is_rain = ifelse(prcp > 0.5, 1, 0))
+  mutate(is_rain = ifelse(prcp > 0.5, 1, 0)) %>%
+  mutate(temp_diff = tmax - tmin) %>%
+  mutate(is_snwd = ifelse(snwd > 5, 1, 0)) %>%
+  mutate(avg_temp = (tmin+tmax)/2) 
 
+trips_per_day
 
 ```
 
@@ -232,6 +236,7 @@ colnames(trips_per_day)
 
 weather_model <- lm(num_trips ~ prcp*snwd + tmax*tmin, trips_per_day_train)
 summary(weather_model)
+rmse(weather_model, trips_per_day_validate)
 
 ```
 To evaluate the performance of the model. 
@@ -307,6 +312,7 @@ plot_data %>%
 
 # calculate the rmse - the values don't look too different
 rmse(model_02, plot_data)
+rmse(model_02, trips_per_day_validate) #4122.867
 
 ```
 
@@ -380,6 +386,7 @@ plot_data %>%
 
 summary(model_03)
 rmse(model_03, plot_data)
+rmse(model_03, trips_per_day_validate)
 
 # RMSE: 3607.688
 # R-squared: 0.8778
@@ -388,6 +395,7 @@ With this slightly more complicated model, we're getting a slightly better RMSE
 Model_03:
 RMSE: 3607.688
 R-squared: 0.8878
+But the problem is, it takes the polynomial of prcp so it might be prone to overfitting 
 
 --------------------------------------------------------
 
@@ -395,9 +403,37 @@ Model 04: Tweak of the model before but accounting day of the week and whether i
 ```{r}
 model_04 <- lm(num_trips ~ weekend + tmax +tmin + day_of_week + holiday, trips_per_day_train)
 
-summary(model_04)
 
-# there's NA as a variable for day 6 which indicate dthat the variable in question is linearly related to the other variables. If this is the case, then there's no unique solution to the regression without dropping one of the variables 
+# there's NA as a variable for day 6 which indicate dthat the variable in question is linearly related to the other variables. If this is the case, then there's no unique solution to the regression without dropping one of the variables
+
+# now testing
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(model_04) %>%
+  mutate(split = "train")
+
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(model_04) %>% 
+  mutate(split = "validate")
+
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
+
+plot_data %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(color=split)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+summary(model_04)
+rmse(model_04, plot_data)
+rmse(model_04, trips_per_day_validate) #5318.257
+
+# RMSE: 4774.246
+# R-squared: 0.7914
+
+
 ```
 Now how can we decide an amount of rain as substantial
 ```{r}
@@ -437,21 +473,293 @@ plot_data %>%
 
 summary(model_05)
 rmse(model_05, plot_data)
+rmse(model_05, trips_per_day_validate) #4462.155
 
-# RMSE: 3933.667
-# R_squared: 0.8585
+# RMSE: 3555.428
+# R_squared: 0.8892
 
 ```
-Does the ratio of tmax and tmin have an effect?
+
+
+--------------------------------------------------------
+Model 06:
+Does the ratio or difference of tmax and tmin have an effect?
 ```{r}
 trips_per_day_train %>% 
   mutate(temp_ratio = tmax/tmin) %>%
   ggplot(aes(x=temp_ratio, y=num_trips)) +
   geom_point() 
 
+trips_per_day_train %>% 
+  mutate(temp_ratio = tmax-tmin) %>%
+  ggplot(aes(x=temp_ratio, y=num_trips)) +
+  geom_point() +
+  scale_x_log10() +
+  geom_smooth(method="lm") 
+
 ```
 
-There does not seem to be a direct correlation so I'm not going to incorporate that 
+There does not seem to be a direct correlation so I'm not going to incorporate. But let's try it out with the temperature difference
+```{r}
+model_06 <- lm(num_trips ~ is_rain*weekend + tmin + temp_diff + month + holiday + day_of_week, trips_per_day_train)
+
+# now testing
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(model_06) %>%
+  mutate(split = "train")
+
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(model_06) %>% 
+  mutate(split = "validate")
+
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
+
+plot_data %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(color=split)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+summary(model_06)
+rmse(model_06, plot_data)
+rmse(model_06, trips_per_day_validate) #4462.155
+
+```
+
+Does daily trips differ ny month?
+```{r}
+trips_per_day_train %>% 
+  ggplot(aes(x=month, y=num_trips)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+Yep, using month was a reasonable choice
+
+-------------------------------------------------------
+Model 7: This would be model 2 but with days of the week and the month
+```{r}
+model_07 <- lm(num_trips ~ weekend*is_rain + is_snwd  + day_of_week + month*weekend + holiday + tmin + tmax, trips_per_day_train)
+
+summary(model_07)
+rmse(model_07, trips_per_day_validate)
+```
+
+--------------------------------------------------------
+Model 8: Using the polynomial data 
+
+```{r}
+model_08 <- lm(num_trips ~ poly(prcp, 3, raw=T) + month + day_of_week + tmin + tmax + is_snwd*weekend + holiday, trips_per_day_train)
+
+# modifying model_02 based on the the summary
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(model_08) %>%
+  mutate(split = "train")
+
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(model_08) %>% 
+  mutate(split = "validate")
+
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
+
+plot_data %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(color=split)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+summary(model_08)
+rmse(model_08, plot_data)
+rmse(model_08, trips_per_day_validate)
+
+```
+
+-----------------------------------------------------------
+Model 9: Model that uses the average temperature 
+
+```{r}
+trips_per_day_train %>%
+  ggplot(aes(x=avg_temp, num_trips)) +
+  geom_point()+
+  geom_smooth(method = "lm")
+```
+
+
+```{r}
+# fitting a model for each polynomial degree
+degree <- 1:8
+
+# set the vectors to hold the training and validation errors
+train_err <- c()
+validate_err <- c()
+
+for(deg in degree){
+  
+  # fit on training data 
+  model <- lm(num_trips ~ poly(avg_temp, deg, raw =TRUE), data = trips_per_day_train)
+  
+  #par(mfrow= c(2,2))
+  #plot(model)
+  
+  # using mean squared error
+  # evaluate on training data  
+  train_err[deg] <- sqrt(mean((predict(model, trips_per_day_train) - trips_per_day_train$num_trips)^2))
+  
+  #evaluate on validate data
+  validate_err[deg] <- sqrt(mean((predict(model, trips_per_day_validate) - trips_per_day_validate$num_trips)^2))
+
+
+}
+
+train_err
+validate_err
+
+
+# this takes the degrees and separates the training and validation error 
+plot_data <- 
+  data.frame(degree, train_err, validate_err) %>% 
+  gather("split", "error", -degree)
+
+# Now let's plot 
+plot_data %>%
+  ggplot(aes(x=degree, y= error, color = split)) +
+  geom_line() +
+  scale_x_continuous(breaks = degree) +
+  xlab("Polynomial degree") +
+  ylab("RMSE")
+
+```
+
+So let's create a final model
+```{r}
+model_09 <- lm(num_trips ~ avg_temp + poly(prcp, 3, raw=T) + weekend + is_snwd + holiday , trips_per_day_train)
+
+
+# modifying model_02 based on the the summary
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(model_09) %>%
+  mutate(split = "train")
+
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(model_09) %>% 
+  mutate(split = "validate")
+
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
+
+plot_data %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(color=split)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+summary(model_09)
+#rmse(model_09, plot_data)
+rmse(model_09, trips_per_day_train)
+rmse(model_09, trips_per_day_validate)
+
+```
+
+
+
+_______________________________________________________
+
+## Choosing a model  
+```{r}
+model_list <- list(weather_model, model_02, model_03, model_04, model_05, model_06, model_07, model_08, model_09)
+
+train_err <- c()
+validate_err <- c()
+
+for(model in model_list){
+  
+  train_err <- c(train_err, sqrt(mean((predict(model, trips_per_day_train) - trips_per_day_train$num_trips)^2)))
+  
+  #evaluate on validate data
+  validate_err <- c(validate_err, sqrt(mean((predict(model, trips_per_day_validate) - trips_per_day_validate$num_trips)^2)))
+
+
+}
+
+train_err
+validate_err
+
+models <- seq(1:length(model_list))
+plot_data <- 
+  data.frame(models, train_err, validate_err) %>% 
+  gather("split", "error", -models)
+
+plot_data %>%
+  ggplot(aes(x=models, y= error, color = split)) +
+  geom_line() +
+  scale_x_continuous(breaks = models) +
+  xlab("Model") +
+  ylab("RMSE")
+
+
+```
+
+________________________________________________________________________
+## Plot the final model in two different ways
+I am choosing Model 9 to be my final model 
+Now to plot the model in two different ways 
+```{r}
+# modifying model_02 based on the the summary
+trips_per_day_train <- 
+  trips_per_day_train %>%
+  add_predictions(model_09) %>%
+  mutate(split = "train")
+
+trips_per_day_validate <- 
+  trips_per_day_validate %>%
+  add_predictions(model_09) %>% 
+  mutate(split = "validate")
+
+plot_data <- bind_rows(trips_per_day_train, trips_per_day_validate)
+plot_data <- 
+  plot_data %>%
+  add_predictions(model_09)
+
+# now convert integer date to date format for the plot
+plot_data <- transform(plot_data, date = as.Date(as.character(date), "%Y%m%d"))
+
+plot_data %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=num_trips, color = split)) +
+  geom_smooth(aes(y=pred), size = 2, se=F) +
+  scale_x_date() +
+  xlab("Date") +
+  ylab("Number of Trips")
+
+
+```
+Now a plot with the predicted value on the x-axis and the actual value on the y-axis
+```{r}
+plot_data %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(color=split)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+```
+
+_____________________________________________________________________
+## Save the final model!
+```{r}
+
+```
+
+
+
+
 
 
 
