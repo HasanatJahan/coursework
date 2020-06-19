@@ -789,7 +789,7 @@ trips_per_day_test %>%
 Results:
 The RMSE on the test data is 3232.411
 And the actual and predicted line is a diagonal linear line which is ideal.
-
+The RMSE on the test data is very close to the value for the training and validation data. 
 
 
 

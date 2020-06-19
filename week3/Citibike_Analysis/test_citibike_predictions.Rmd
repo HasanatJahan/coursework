@@ -1,0 +1,19 @@
+---
+title: "Testing CitiBike Predictions"
+output: html_notebook
+---
+
+Let's load the trip data
+```{r}
+load('trips_2015.RData')
+```
+
+Now let's see what trips and weather look like
+```{r}
+trips
+weather
+colnames(trips)
+colnames(weather)
+
+```
+
