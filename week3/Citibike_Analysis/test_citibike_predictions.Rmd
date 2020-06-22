@@ -156,8 +156,7 @@ trips_per_day %>%
   ylab("Actual")
 
 
-
-
+summary(model)
 ```
 The predictions were very bad. 
 The RMSE is 6806.518 and the predicted line is very far away. This has made me sad. 
@@ -168,15 +167,24 @@ _______________________________________________
 
 ## Now waiting to record test results for a teammmate
 
-
-
+Gaby's model did really well compared to my model. Her predicted line ran through the data points diagonally. Predictions had a higher RMSE however, but her R-squared value of the model was much better. 
+For her model:
+Multiple R-squared:  0.8628
+For my model:
+Multiple R-squared:  0.7387
+I think this might have caused a large shift in the predicted values.
 
 _______________________________________________
 ## Final Thoughts
 
+This was a very insightful experience. Using mainly RMSE to evaluate the model and checking for overfitting, led me to underfit the model by being too careful. As I used precipitation as a polynomial, it could also be that my model have been overfitting. 
 
+Also I should have used to 2013 data, that would have led to better predictions as we would have more data. For now, why my model did so poorly can
+have several explanations. 
 
+Either way, for future model building I have to heed more attention to the value of R-squared as gahter skills and resources to do better feature engineering. 
 
+This was a fun and insightful experience to the biases we hold within ourselves. 
 
 
 
