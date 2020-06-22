@@ -122,7 +122,8 @@ trips_per_day <-
   mutate(weekend = ifelse(day_of_week == 1 | day_of_week == 7, 1, 0)) %>% 
   mutate(is_rain = ifelse(prcp > 0.5, 1, 0)) %>%
   mutate(is_snwd = ifelse(snwd > 5, 1, 0)) %>%
-  mutate(avg_temp = (tmin+tmax)/2)
+  mutate(avg_temp = (tmin+tmax)/2) %>%
+  mutate(temp_diff = tmax - tmin)
 
 ```
 
@@ -139,14 +140,18 @@ _________________________________________________
 Compute the RMSE between the actual and predicted trips for 2015 and compare the results to what you found with cross-validation on the 2014 data.
 
 ```{r}
+load('final_model.RData')
+
+tidy(final_model)
+
 model <- lm(num_trips ~ avg_temp + poly(prcp, 3, raw=T) + weekend + is_snwd + holiday, trips_per_day)
 
-rmse(model, trips_per_day)
+#rmse(final_model, trips_per_day)
 
 
 trips_per_day <- 
   trips_per_day %>%
-  add_predictions(model_09)  
+  add_predictions(model)  
 
 trips_per_day %>%
   ggplot(aes(x=pred, y=num_trips)) +
@@ -155,11 +160,10 @@ trips_per_day %>%
   xlab("Predicted") +
   ylab("Actual")
 
-
+rmse(model, trips_per_day)
 summary(model)
 ```
-The predictions were very bad. 
-The RMSE is 6806.518 and the predicted line is very far away. This has made me sad. 
+The RMSE is 6806.518 and the predicted line is through the diagonal as predicted. This has made me sad. 
 The predictions for 2014 had RMSE on the test data to be 3232.411. Which was similar train data and validate data 
 And the actual and predicted line was diagonal linear line through the points which was ideal.
 
