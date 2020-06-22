@@ -3,17 +3,187 @@ title: "Testing CitiBike Predictions"
 output: html_notebook
 ---
 
-Let's load the trip data
+## Let's load the trip data
 ```{r}
 load('trips_2015.RData')
+
+# Get rid of ymd and add date
+weather <- 
+  weather %>%
+  select(-ymd)
+
+weather <- 
+  weather %>% 
+  rename(
+    ymd = date
+  ) 
+
+
 ```
 
 Now let's see what trips and weather look like
 ```{r}
 trips
-weather
 colnames(trips)
 colnames(weather)
 
+trips <- 
+  trips %>%
+  transform(
+    ymd = as.character(ymd)
+  )
+
+weather 
+trips 
+
+trips %>%
+  select(ymd)
+
 ```
+Let's calculate num_trips 
+```{r}
+
+trips <- 
+  trips %>%
+  select(ymd) %>%
+  group_by(ymd) %>%
+  summarise(num_trips = n())
+
+trips
+
+
+```
+
+
+Let's create columns to contain what I had for the original working data 
+
+```{r}
+weather
+
+trips_per_day <- 
+  trips %>% 
+  left_join(weather)
+
+trips_per_day %>%
+  transform(
+    tmax = tmax/10, 
+    tmin = tmin/10
+  )
+
+
+
+```
+
+Now joining the holidays data
+Let's import holidays and join that 
+```{r}
+
+holidays <- read_delim("holidays.csv", "\t", 
+    escape_double = FALSE, col_names = FALSE) 
+
+holidays <- 
+  holidays %>%
+  rename(
+    holiday_num = X1, 
+    ymd = X2, 
+    holiday = X3 
+  )
+
+
+holidays <- 
+  holidays %>%
+  mutate(ymd = as.character(ymd))
+
+
+trips_per_day <- 
+  trips_per_day %>% 
+  left_join(holidays, by = "ymd")
+
+# create a column for whether a day is a holiday or not 
+trips_per_day <-
+  trips_per_day %>%
+  mutate(holiday = ifelse(!is.na(holiday), 1, 0))
+
+
+trips_per_day
+
+```
+
+
+
+
+
+```{r}
+
+# now to modify it to include my features
+trips_per_day <-  
+  trips_per_day %>%
+  mutate(month = as.factor(month(ymd)), day_of_week = as.factor(wday(ymd))) %>%
+  mutate(weekend = ifelse(day_of_week == 1 | day_of_week == 7, 1, 0)) %>% 
+  mutate(is_rain = ifelse(prcp > 0.5, 1, 0)) %>%
+  mutate(is_snwd = ifelse(snwd > 5, 1, 0)) %>%
+  mutate(avg_temp = (tmin+tmax)/2)
+
+```
+
+
+Let's see if the data has the features I want 
+```{r}
+trips_per_day
+
+```
+_________________________________________________
+
+## Now to test my model on the data 
+
+Compute the RMSE between the actual and predicted trips for 2015 and compare the results to what you found with cross-validation on the 2014 data.
+
+```{r}
+model <- lm(num_trips ~ avg_temp + poly(prcp, 3, raw=T) + weekend + is_snwd + holiday, trips_per_day)
+
+rmse(model, trips_per_day)
+
+
+trips_per_day <- 
+  trips_per_day %>%
+  add_predictions(model_09)  
+
+trips_per_day %>%
+  ggplot(aes(x=pred, y=num_trips)) +
+  geom_point(aes(y=num_trips)) +
+  geom_abline(linetype = "dashed") +
+  xlab("Predicted") +
+  ylab("Actual")
+
+
+
+
+```
+The predictions were very bad. 
+The RMSE is 6806.518 and the predicted line is very far away. This has made me sad. 
+The predictions for 2014 had RMSE on the test data to be 3232.411. Which was similar train data and validate data 
+And the actual and predicted line was diagonal linear line through the points which was ideal.
+
+_______________________________________________
+
+## Now waiting to record test results for a teammmate
+
+
+
+
+_______________________________________________
+## Final Thoughts
+
+
+
+
+
+
+
+
+
+
+
+
+
 
