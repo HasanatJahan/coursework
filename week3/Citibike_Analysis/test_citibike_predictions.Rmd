@@ -2,6 +2,10 @@
 title: "Testing CitiBike Predictions"
 output: html_notebook
 ---
+## Testing Model Created on 2014 CitiBike Data on 2015 CitiBike Data
+
+Here, I am testing the model created based on the 2014 Citibike data, to the 2015 Citibike data and evaluate the performance of the model. 
+Here, a partner's model is also evaluated and the areas of improvement for the personal model are noted. 
 
 ## Let's load the trip data
 ```{r}
@@ -163,30 +167,24 @@ trips_per_day %>%
 rmse(model, trips_per_day)
 summary(model)
 ```
-The RMSE is 6806.518 and the predicted line is through the diagonal as predicted. This has made me sad. 
+The RMSE is 6806.518 and the predicted line is through the diagonal to complete expectations. 
 The predictions for 2014 had RMSE on the test data to be 3232.411. Which was similar train data and validate data 
-And the actual and predicted line was diagonal linear line through the points which was ideal.
+And the actual and predicted line was diagonal linear line through the points which was ideal. However, the RMSE for the 2015 data was double compared to the RMSE of the 2014. 
 
 _______________________________________________
 
 ## Now waiting to record test results for a teammmate
 
-Gaby's model did really well compared to my model. Her predicted line ran through the data points diagonally. Predictions had a higher RMSE however, but her R-squared value of the model was much better. 
-For her model:
-Multiple R-squared:  0.8628
-For my model:
-Multiple R-squared:  0.7387
-I think this might have caused a large shift in the predicted values.
+Gaby's model did really well. Her predicted line ran through the data points diagonally. Predictions had a higher RMSE however, but her R-squared value of the model was much better. 
 
 _______________________________________________
 ## Final Thoughts
 
 This was a very insightful experience. Using mainly RMSE to evaluate the model and checking for overfitting, led me to underfit the model by being too careful. As I used precipitation as a polynomial, it could also be that my model have been overfitting. 
 
-Also I should have used to 2013 data, that would have led to better predictions as we would have more data. For now, why my model did so poorly can
-have several explanations. 
+Also I should have used to 2013 data, that would have led to better predictions as we would have more data. For now, why my model did poorly can have several explanations. 
 
-Either way, for future model building I have to heed more attention to the value of R-squared as gahter skills and resources to do better feature engineering. 
+Either way, for future model building I have to heed more attention to the value of R-squared as gather skills and resources to do better feature engineering. 
 
 This was a fun and insightful experience to the biases we hold within ourselves. 
 

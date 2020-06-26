@@ -1,0 +1,107 @@
+---
+title: "Predicting 2015 Citibike Trips"
+author: "Gabrielle Martinez (Pace University)"
+date: "6/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(here)
+library(scales)
+library(broom)
+library(modelr)
+library(tidyverse)
+library(lubridate)
+theme_set(theme_bw())
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Using a model trained on 2014 data to predict 2015 trends
+
+First let's load the 2015 data for cleaning and reformatting. 
+
+```{r load}
+load('trips_2015.RData')
+head(trips_per_day2015)
+
+```
+______________________________________________
+
+My changes to get the data 
+```{r}
+weather2015 <- read.table('weather_2015.csv', header=T, sep=',')
+
+# extract just a few columns, lowercase column names, and parse dates
+weather2015 <- select(weather2015, DATE, PRCP, SNWD, SNOW, TMAX, TMIN)
+names(weather2015) <- tolower(names(weather2015))
+weather2015 <- mutate(weather2015,
+                  ymd = as.Date(date))
+weather2015 <- tbl_df(weather2015)
+
+#creating trips_per_day2015 data
+
+trips %>% 
+  group_by(ymd) %>%
+  summarise(num_trips = n()) -> trips_per_day2015
+
+trips_per_day2015 %>%
+  left_join(weather2015, by=c("ymd"="ymd")) -> trips_per_day2015
+```
+
+
+
+_______________________________________________
+Next let's load our model and a function to add holiday data to `trips_per_day2015`
+
+```{r format}
+load('predict_citibike_model.RData')
+#add holiday and factor columns
+modifiy_trips_data(trips_per_day2015) -> trips_per_day2015
+head(trips_per_day2015)
+#tmin, tmax are multiplied by 10
+trips_per_day2015 %>%
+  mutate(tmax = tmax/10, tmin = tmin/10) -> trips_per_day2015
+ggplot(trips_per_day2015, aes(x=ymd, y=num_trips)) +
+  geom_point() +
+  geom_smooth()
+```
+`trips_perday2015` now has 5 more columns. `holiday` states the holiday for the day and `isholiday` states if the day is a holiday or not (1,0). `israining` states if it rained that day if the precipitation variable >= 0.1 inches. `day_of_week` tells what day of the week it is and based on that`isweekday` states if the day is a weekday or a weekend. 
+
+
+## Predicting 2015 trips per day
+
+Using the following model we try to predict the trips per day 
+
+```{r}
+tidy(model4)
+glance(model4)
+#rmse_trips_2015
+rmse(model4, trips_per_day2015) 
+trips_per_day2015 %>%
+  add_predictions(model4) -> trips_per_day2015
+ggplot(trips_per_day2015, aes(x=ymd, y=num_trips)) +
+  geom_point() +
+  geom_point(aes(y=pred), color = "orange") +
+  geom_line(aes(y=pred),color = "orange") +
+  ylab("number of trips")+
+  xlab("date")
+ggplot(trips_per_day2015, aes(x=num_trips, y=pred))+
+  geom_point()+
+  geom_abline(color = "orange") +
+  ylab("predicted number of trips") +
+  xlab("observed number of trips")
+  
+```
+```{r}
+summary(model4)
+```
+
+## Outcomes
+
++ The RMSE is much higher than my test on 2014 data.
++ Plotting the date v. number of trips shows that the model is fairly good at predicting the first half of the year but low balls the predictions for the later half.
+
++ Plotting the observed v. the predicted number of trips, you see that the plot has a diagoinal trend but that many more of the points lie below the 45 degree line (the 1:1 relationship). There's also a wider variance as the number of trips increase.
+
++ This model seems to be too conservative in its estimates. 
+
